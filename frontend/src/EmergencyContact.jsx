@@ -1,144 +1,202 @@
-const express = require("express");
-const mongoose = require("mongoose");
+import React, { useState } from "react";
+import axios from "axios";
 
-const router = express.Router();
+function EmergencyContact() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [relation, setRelation] = useState("");
 
-// ===============================
-// ADD EMERGENCY CONTACT
-// ===============================
-router.post("/add", async (req, res) => {
-  try {
-    const { name, phone, relation } = req.body;
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    if (!name || !phone || !relation) {
-      return res.status(400).json({
-        message: "Please fill all required fields."
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setMessage("");
+    setError("");
+
+    if (!name.trim() || !phone.trim() || !relation.trim()) {
+      setError("Please fill all required fields.");
+      return;
     }
 
-    if (!/^\d{10}$/.test(phone)) {
-      return res.status(400).json({
-        message: "Please enter a valid 10-digit phone number."
-      });
+    if (!/^\d{10}$/.test(phone.trim())) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
     }
 
-    // Wait until MongoDB is connected
-    await mongoose.connection.asPromise();
+    try {
+      setLoading(true);
 
-    const db = mongoose.connection.db;
+      const response = await axios.post(
+        "https://carelink-9gr4.onrender.com/emergency-contacts/add",
+        {
+          name: name.trim(),
+          phone: phone.trim(),
+          relation: relation.trim(),
+        }
+      );
 
-    if (!db) {
-      return res.status(500).json({
-        message: "Database is not ready."
-      });
-    }
+      setMessage(
+        response.data.message || "Emergency contact saved successfully."
+      );
 
-    const contact = {
-      name: name.trim(),
-      phone: phone.trim(),
-      relation: relation.trim(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      setName("");
+      setPhone("");
+      setRelation("");
 
-    const result = await db
-      .collection("emergencycontacts")
-      .insertOne(contact);
+    } catch (err) {
+      console.error("Emergency Contact Error:", err);
 
-    res.status(201).json({
-      message: "Emergency contact saved successfully.",
-      contact: {
-        _id: result.insertedId,
-        ...contact
+      if (err.response) {
+        setError(
+          err.response.data?.message ||
+          "Failed to save emergency contact."
+        );
+      } else if (err.request) {
+        setError("Unable to connect to server.");
+      } else {
+        setError("Something went wrong. Please try again.");
       }
-    });
 
-  } catch (error) {
-    console.error("ADD EMERGENCY CONTACT ERROR:", error);
-
-    res.status(500).json({
-      message: "Failed to save emergency contact.",
-      error: error.message
-    });
-  }
-});
-
-
-// ===============================
-// GET EMERGENCY CONTACTS
-// ===============================
-router.get("/", async (req, res) => {
-  try {
-    // Wait until MongoDB is connected
-    await mongoose.connection.asPromise();
-
-    const db = mongoose.connection.db;
-
-    if (!db) {
-      return res.status(500).json({
-        message: "Database is not ready."
-      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const contacts = await db
-      .collection("emergencycontacts")
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+  return (
+    <div
+      style={{
+        maxWidth: "600px",
+        margin: "40px auto",
+        padding: "25px",
+        background: "#fff",
+        borderRadius: "12px",
+        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+      }}
+    >
+      <h2 style={{ textAlign: "center" }}>
+        Emergency Contact
+      </h2>
 
-    res.status(200).json(contacts);
+      <p style={{ textAlign: "center", color: "#666" }}>
+        Add an emergency contact for quick access.
+      </p>
 
-  } catch (error) {
-    console.error("GET EMERGENCY CONTACTS ERROR:", error);
+      {message && (
+        <div
+          style={{
+            padding: "12px",
+            marginBottom: "15px",
+            background: "#d4edda",
+            color: "#155724",
+            borderRadius: "6px",
+          }}
+        >
+          {message}
+        </div>
+      )}
 
-    res.status(500).json({
-      message: "Failed to fetch emergency contacts.",
-      error: error.message
-    });
-  }
-});
+      {error && (
+        <div
+          style={{
+            padding: "12px",
+            marginBottom: "15px",
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: "6px",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
+      <form onSubmit={handleSubmit}>
 
-// ===============================
-// DELETE EMERGENCY CONTACT
-// ===============================
-router.delete("/:id", async (req, res) => {
-  try {
-    await mongoose.connection.asPromise();
+        <div style={{ marginBottom: "18px" }}>
+          <label>Contact Name</label>
 
-    const db = mongoose.connection.db;
+          <input
+            type="text"
+            placeholder="Enter contact name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginTop: "6px",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
 
-    if (!db) {
-      return res.status(500).json({
-        message: "Database is not ready."
-      });
-    }
+        <div style={{ marginBottom: "18px" }}>
+          <label>Phone Number</label>
 
-    const result = await db
-      .collection("emergencycontacts")
-      .deleteOne({
-        _id: new mongoose.Types.ObjectId(req.params.id)
-      });
+          <input
+            type="tel"
+            placeholder="Enter 10-digit phone number"
+            value={phone}
+            maxLength="10"
+            onChange={(e) => {
+              setPhone(e.target.value.replace(/\D/g, ""));
+            }}
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginTop: "6px",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({
-        message: "Emergency contact not found."
-      });
-    }
+        <div style={{ marginBottom: "22px" }}>
+          <label>Relation</label>
 
-    res.status(200).json({
-      message: "Emergency contact deleted successfully."
-    });
+          <select
+            value={relation}
+            onChange={(e) => setRelation(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "12px",
+              marginTop: "6px",
+              boxSizing: "border-box",
+            }}
+          >
+            <option value="">Select Relation</option>
+            <option value="Father">Father</option>
+            <option value="Mother">Mother</option>
+            <option value="Brother">Brother</option>
+            <option value="Sister">Sister</option>
+            <option value="Friend">Friend</option>
+            <option value="Guardian">Guardian</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
 
-  } catch (error) {
-    console.error("DELETE EMERGENCY CONTACT ERROR:", error);
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "13px",
+            border: "none",
+            borderRadius: "6px",
+            background: loading ? "#999" : "#007bff",
+            color: "#fff",
+            fontSize: "16px",
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
+          {loading
+            ? "Saving..."
+            : "Save Emergency Contact"}
+        </button>
 
-    res.status(500).json({
-      message: "Failed to delete emergency contact.",
-      error: error.message
-    });
-  }
-});
+      </form>
+    </div>
+  );
+}
 
-
-module.exports = router;
+export default EmergencyContact;
