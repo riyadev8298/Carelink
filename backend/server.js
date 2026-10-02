@@ -5,14 +5,12 @@ require("dotenv").config();
 
 const app = express();
 
-
 // ===============================
 // MIDDLEWARE
 // ===============================
 
 app.use(cors());
 app.use(express.json());
-
 
 // ===============================
 // ROUTES
@@ -25,7 +23,6 @@ const appointmentRoutes = require("./routes/appointmentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const emergencyContactRoutes = require("./routes/EmergencyContactRoutes");
 
-
 // ===============================
 // ROUTE CONNECTIONS
 // ===============================
@@ -36,7 +33,6 @@ app.use("/bookings", bookingRoutes);
 app.use("/appointments", appointmentRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/emergency-contacts", emergencyContactRoutes);
-
 
 // ===============================
 // TEST ROUTES
@@ -49,7 +45,6 @@ app.get("/", (req, res) => {
 app.get("/hello", (req, res) => {
     res.send("Hello CareLink");
 });
-
 
 // ===============================
 // MONGODB CONNECTION
@@ -70,9 +65,16 @@ mongoose
         const db = mongoose.connection.db;
         app.locals.db = db;
     })
+    .catch((error) => {
+        console.error("MongoDB Connection Error:", error);
+    });
 
-        const PORT = process.env.PORT || 5000;
+// ===============================
+// SERVER
+// ===============================
+
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`CareLink server is running on port ${PORT}`);
+    console.log(`CareLink server is running on port ${PORT}`);
 });
