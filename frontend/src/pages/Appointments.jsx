@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://carelink-9gr4.onrender.com";
 
 // Helper for today's date in YYYY-MM-DD
 const getTodayString = () => {

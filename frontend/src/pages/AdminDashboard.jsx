@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = "https://carelink-9gr4.onrender.com";
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("appointments");
