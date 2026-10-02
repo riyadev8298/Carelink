@@ -4,20 +4,57 @@ const User = require("../models/User");
 
 console.log("USER ROUTES LOADED");
 
+// REGISTER
 router.post("/register", async (req, res) => {
     try {
-        const user = new User(req.body);
+        console.log("REGISTER REQUEST:", req.body);
+
+        const { name, email, password } = req.body;
+
+        // Check fields
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
+
+        // Check existing email
+        const existingUser = await User.findOne({
+            email: email.trim().toLowerCase()
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email already registered. Please use another email."
+            });
+        }
+
+        // Create user
+        const user = new User({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            password: password,
+            role: "user"
+        });
+
         await user.save();
 
-        res.json({
-            message: "User registered successfully",
-            user: user
+        console.log("USER REGISTERED SUCCESSFULLY");
+
+        return res.status(201).json({
+            message: "Registration Successful!",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
         });
 
     } catch (error) {
         console.log("REGISTRATION ERROR:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Registration failed",
             error: error.message
         });
@@ -25,11 +62,14 @@ router.post("/register", async (req, res) => {
 });
 
 
+// LOGIN
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const user = await User.findOne({ email: email });
+        const user = await User.findOne({
+            email: email.trim().toLowerCase()
+        });
 
         if (!user) {
             return res.status(404).json({
@@ -45,10 +85,17 @@ router.post("/login", async (req, res) => {
 
         res.json({
             message: "Login successful",
-            user: user
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
         });
 
     } catch (error) {
+        console.log("LOGIN ERROR:", error);
+
         res.status(500).json({
             message: "Login failed",
             error: error.message
@@ -57,11 +104,10 @@ router.post("/login", async (req, res) => {
 });
 
 
+// GET USERS
 router.get("/", async (req, res) => {
     try {
-        console.log("GET USERS ROUTE WORKING");
-const users = await User.find().select("-password");
-        console.log("TOTAL USERS:", users.length);
+        const users = await User.find().select("-password");
 
         res.json(users);
 

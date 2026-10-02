@@ -1,0 +1,138 @@
+const express = require("express");
+const router = express.Router();
+
+const Review = require("../models/Review");
+
+// ===============================
+// ADD REVIEW
+// ===============================
+router.post("/add", async (req, res) => {
+  try {
+    const {
+      caregiverId,
+      caregiverName,
+      userName,
+      userEmail,
+      rating,
+      review
+    } = req.body;
+
+    // Required fields check
+    if (
+      !caregiverId ||
+      !caregiverName ||
+      !userName ||
+      !rating ||
+      !review
+    ) {
+      return res.status(400).json({
+        message: "Please fill all required fields."
+      });
+    }
+
+    // Rating validation
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5."
+      });
+    }
+
+    // Create review
+    const newReview = new Review({
+      caregiverId,
+      caregiverName,
+      userName,
+      userEmail: userEmail || "",
+      rating,
+      review
+    });
+
+    await newReview.save();
+
+    res.status(201).json({
+      message: "Review added successfully.",
+      review: newReview
+    });
+
+  } catch (error) {
+    console.error("ADD REVIEW ERROR:", error);
+
+    res.status(500).json({
+      message: "Failed to add review.",
+      error: error.message
+    });
+  }
+});
+
+
+// ===============================
+// GET REVIEWS FOR CAREGIVER
+// ===============================
+router.get("/caregiver/:caregiverId", async (req, res) => {
+  try {
+    const reviews = await Review.find({
+      caregiverId: req.params.caregiverId
+    }).sort({ createdAt: -1 });
+
+    res.json(reviews);
+
+  } catch (error) {
+    console.error("GET REVIEWS ERROR:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch reviews.",
+      error: error.message
+    });
+  }
+});
+
+
+// ===============================
+// GET ALL REVIEWS
+// ===============================
+router.get("/", async (req, res) => {
+  try {
+    const reviews = await Review.find().sort({ createdAt: -1 });
+
+    res.json(reviews);
+
+  } catch (error) {
+    console.error("GET ALL REVIEWS ERROR:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch reviews.",
+      error: error.message
+    });
+  }
+});
+
+
+// ===============================
+// DELETE REVIEW
+// ===============================
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedReview = await Review.findByIdAndDelete(req.params.id);
+
+    if (!deletedReview) {
+      return res.status(404).json({
+        message: "Review not found."
+      });
+    }
+
+    res.json({
+      message: "Review deleted successfully."
+    });
+
+  } catch (error) {
+    console.error("DELETE REVIEW ERROR:", error);
+
+    res.status(500).json({
+      message: "Failed to delete review.",
+      error: error.message
+    });
+  }
+});
+
+
+module.exports = router;
