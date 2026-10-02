@@ -57,6 +57,13 @@ function EmergencyContact() {
           "Emergency contact saved successfully."
       );
 
+      if (response.data?.contact) {
+        localStorage.setItem(
+          "carelink_emergency_contact",
+          JSON.stringify(response.data.contact)
+        );
+      }
+
       setName("");
       setPhone("");
       setRelation("");

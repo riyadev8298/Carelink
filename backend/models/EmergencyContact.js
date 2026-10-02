@@ -4,15 +4,18 @@ const emergencyContactSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
     phone: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
-    relationship: {
+    relation: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
