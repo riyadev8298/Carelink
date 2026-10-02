@@ -28,7 +28,7 @@ router.post("/add", async (req, res) => {
     console.error("Emergency Contact Error:", error);
 
     res.status(500).json({
-      message: "Failed to save emergency contact.",
+      message: error.message || "Failed to save emergency contact.",
       error: error.message
     });
   }

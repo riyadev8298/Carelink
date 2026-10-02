@@ -75,11 +75,18 @@ function EmergencyContact() {
       );
 
       if (err.response) {
-        setError(
-          err.response.data?.message ||
-            err.response.data?.error ||
-            `Server error (${err.response.status}).`
-        );
+        const errorDetail = err.response.data?.error;
+        const errorMsg = err.response.data?.message;
+
+        if (errorDetail && errorMsg && errorDetail !== errorMsg) {
+          setError(`${errorMsg} (${errorDetail})`);
+        } else {
+          setError(
+            errorDetail ||
+              errorMsg ||
+              `Server error (${err.response.status}).`
+          );
+        }
       } else if (err.request) {
         setError(
           "Cannot connect to CareLink server. Please try again."

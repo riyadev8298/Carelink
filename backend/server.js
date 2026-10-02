@@ -39,20 +39,44 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-// MongoDB connection
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log("MongoDB Connected Successfully");
+let dbConnectionError = null;
 
-    // IMPORTANT
-    app.locals.db = mongoose.connection.db;
+const connectWithRetry = () => {
+  console.log("Connecting to MongoDB Atlas...");
+  mongoose
+    .connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 10000,
+    })
+    .then(() => {
+      console.log("MongoDB Connected Successfully");
+      dbConnectionError = null;
+      app.locals.db = mongoose.connection.db;
+      console.log("Database reference is ready");
+    })
+    .catch((error) => {
+      console.error("MongoDB Connection Error:", error.message || error);
+      dbConnectionError = error.message || String(error);
+      setTimeout(connectWithRetry, 5000);
+    });
+};
 
-    console.log("Database reference is ready");
-  })
-  .catch((error) => {
-    console.error("MongoDB Connection Error:", error);
+connectWithRetry();
+
+app.get("/api/status", (req, res) => {
+  let maskedUri = "Not set";
+  if (process.env.MONGO_URI) {
+    const parts = process.env.MONGO_URI.split("@");
+    maskedUri = parts.length > 1 ? `mongodb+srv://***@${parts[1]}` : "set";
+  }
+  res.json({
+    status: "ok",
+    commit: "deploy-live-v1",
+    dbReadyState: mongoose.connection.readyState,
+    dbReadyStateText: ["disconnected", "connected", "connecting", "disconnecting"][mongoose.connection.readyState] || "unknown",
+    maskedUri,
+    dbError: dbConnectionError
   });
+});
 
 // Server
 const PORT = process.env.PORT || 5000;
