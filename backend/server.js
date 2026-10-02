@@ -5,27 +5,16 @@ require("dotenv").config();
 
 const app = express();
 
-// ===============================
-// MIDDLEWARE
-// ===============================
-
 app.use(cors());
 app.use(express.json());
 
-// ===============================
-// ROUTES
-// ===============================
-
+// Routes
 const userRoutes = require("./routes/userRoutes");
 const caregiverRoutes = require("./routes/caregiverRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const emergencyContactRoutes = require("./routes/EmergencyContactRoutes");
-
-// ===============================
-// ROUTE CONNECTIONS
-// ===============================
 
 app.use("/users", userRoutes);
 app.use("/caregivers", caregiverRoutes);
@@ -34,47 +23,40 @@ app.use("/appointments", appointmentRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/emergency-contacts", emergencyContactRoutes);
 
-// ===============================
-// TEST ROUTES
-// ===============================
-
+// Home
 app.get("/", (req, res) => {
-    res.send("CareLink Backend is Running");
+  res.send("CareLink Backend is Running");
 });
 
 app.get("/hello", (req, res) => {
-    res.send("Hello CareLink");
+  res.send("Hello CareLink");
 });
-
-// ===============================
-// MONGODB CONNECTION
-// ===============================
 
 const MONGO_URI = process.env.MONGO_URI;
 
 if (!MONGO_URI) {
-    console.error("❌ MONGO_URI is missing in .env file");
-    process.exit(1);
+  console.error("❌ MONGO_URI is missing");
+  process.exit(1);
 }
 
+// MongoDB connection
 mongoose
-    .connect(MONGO_URI)
-    .then(() => {
-        console.log("MongoDB Connected Successfully");
+  .connect(MONGO_URI)
+  .then(() => {
+    console.log("MongoDB Connected Successfully");
 
-        const db = mongoose.connection.db;
-        app.locals.db = db;
-    })
-    .catch((error) => {
-        console.error("MongoDB Connection Error:", error);
-    });
+    // IMPORTANT
+    app.locals.db = mongoose.connection.db;
 
-// ===============================
-// SERVER
-// ===============================
+    console.log("Database reference is ready");
+  })
+  .catch((error) => {
+    console.error("MongoDB Connection Error:", error);
+  });
 
+// Server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, "0.0.0.0", () => {
-    console.log(`CareLink server is running on port ${PORT}`);
+  console.log(`CareLink server is running on port ${PORT}`);
 });
